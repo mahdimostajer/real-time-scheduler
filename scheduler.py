@@ -3,12 +3,11 @@ import random
 import copy
 from itertools import count, zip_longest
 
-
 NUMBER_OF_TASKS = 12
 NUMBER_OF_PROCESSORS = 4
 PERIODS = [50, 40, 30, 20, 10]
 SUM_UTIL = 3
-ERROR_MARGIN = 0.1**10
+ERROR_MARGIN = 0.1 ** 10
 
 
 class Task:
@@ -53,10 +52,10 @@ class Job:
 
     def __str__(self) -> str:
         return (
-            f"JOB=> id={self.id}: task=({str(self.task)})\n"
-            + f"remaining_execution_time={self.remaining_execution_time}\n"
-            + f"release={self.release_time} deadline={self.deadline} start={self.start_time} finish={self.finish_time}\n"
-            + f"execution_intervals={self.execution_intervals}"
+                f"JOB=> id={self.id}: task=({str(self.task)})\n"
+                + f"remaining_execution_time={self.remaining_execution_time}\n"
+                + f"release={self.release_time} deadline={self.deadline} start={self.start_time} finish={self.finish_time}\n"
+                + f"execution_intervals={self.execution_intervals}"
         )
 
 
@@ -130,12 +129,25 @@ def allocate_processors_to_tasks(tasks: list[Task], processors: list[Processor])
             min_processor.assign_task(task)
 
 
-def create_jobs(task: Task, until: int) -> list[Job]:
+def create_task_jobs(task: Task, until: int) -> list[Job]:
     jobs: list[Job] = []
     clock = 0
     while clock < until:
         jobs.append(Job(task=task, release_time=clock, deadline=clock + task.period))
         clock += task.period
+    return jobs
+
+
+def create_all_jobs(tasks: list[Task]) -> list[Job]:
+    tasks.sort(key=lambda task: task.period)
+    hyper_period = math.lcm(*[task.period for task in tasks])
+
+    print(f"hyper_period={hyper_period}")
+    print_task_list(tasks)
+
+    jobs: list[Job] = []
+    for task in tasks:
+        jobs += create_task_jobs(task, hyper_period)
     return jobs
 
 
@@ -163,6 +175,7 @@ def print_job_list(jobs: list[Job]) -> None:
 
 
 def print_task_list(tasks: list[Task]) -> None:
+    tasks = sorted(tasks, key=lambda task: task.util, reverse=True)
     for task in tasks:
         print(task)
 
@@ -192,20 +205,8 @@ def print_scheduled_job_list(jobs: list[Job]) -> None:
             print(f"EXECUTION OF TASK WAS FINISHED.")
 
 
-def edf_schedule(tasks: list[Task]) -> list[Job]:
-    print("\nEDF_SCHEDULE FUNCTION:")
-
-    tasks.sort(key=lambda task: task.period)
-    hyper_period = math.lcm(*[task.period for task in tasks])
-
-    print(f"hyper_period={hyper_period}")
-    print_task_list(tasks)
-
-    jobs: list[Job] = []
-    for task in tasks:
-        jobs += create_jobs(task, hyper_period)
+def edf_schedule_jobs(jobs: list[Job]) -> list[Job]:
     scheduled_jobs: list[Job] = []
-
     clock = 0
     while jobs:
         if clock == 0 or active_job not in jobs:
@@ -233,6 +234,15 @@ def edf_schedule(tasks: list[Task]) -> list[Job]:
     return scheduled_jobs
 
 
+def edf_schedule(tasks: list[Task]):
+    print("\nEDF_SCHEDULE FUNCTION:")
+    jobs = create_all_jobs(tasks)
+    scheduled_jobs = edf_schedule_jobs(jobs)
+
+    print("\nJOBS AFTER SCHEDULING:")
+    print_scheduled_job_list(copy.deepcopy(scheduled_jobs))
+
+
 def schedule():
     task_utils = uunifast(tasks_count=NUMBER_OF_TASKS, utilization=SUM_UTIL)
     task_periods = get_periods(n=NUMBER_OF_TASKS)
@@ -244,9 +254,7 @@ def schedule():
     for processor in processors:
         print("\nPROCESSOR:")
         print(processor)
-        jobs = edf_schedule(processor.tasks.copy())
-        print("\nJOBS AFTER SCHEDULING:")
-        print_scheduled_job_list(copy.deepcopy(jobs))
+        edf_schedule(processor.tasks)
 
 
 if __name__ == "__main__":
