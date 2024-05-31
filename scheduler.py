@@ -139,7 +139,7 @@ def create_jobs(task: Task, until: int) -> list[Job]:
     return jobs
 
 
-def pick_earliest_deadline_job(jobs: list[Job], clock: float) -> Job:
+def pick_earliest_deadline_job(jobs: list[Job], clock: float) -> Job | None:
     earliest_deadline_job = None
     for job in filter(lambda job: job.release_time <= clock, jobs):
         if earliest_deadline_job is None:
@@ -149,6 +149,12 @@ def pick_earliest_deadline_job(jobs: list[Job], clock: float) -> Job:
         else:
             pass
     return earliest_deadline_job
+
+
+def pick_preempt_job(jobs: list[Job], clock: float, deadline: float) -> Job | None:
+    preempt_jobs: list[Job] = list(filter(lambda job: job.release_time <= clock and job.deadline < deadline, jobs))
+    preempt_jobs.sort(key=lambda job: job.release_time)
+    return preempt_jobs[0] if len(preempt_jobs) > 0 else None
 
 
 def print_job_list(jobs: list[Job]) -> None:
@@ -206,8 +212,12 @@ def edf_schedule(tasks: list[Task]) -> list[Job]:
             clock = max(clock, min([job.release_time for job in jobs]))
             active_job = pick_earliest_deadline_job(jobs, clock)
             active_job.start_time_list.append(clock)
-        preempt_job = pick_earliest_deadline_job(jobs, clock + active_job.remaining_execution_time)
-        if preempt_job.deadline < active_job.deadline:
+        preempt_job = pick_preempt_job(
+            jobs=jobs,
+            clock=clock + active_job.remaining_execution_time,
+            deadline=active_job.deadline,
+        )
+        if preempt_job is not None:
             active_job.remaining_execution_time -= preempt_job.release_time - active_job.start_time_list[-1]
             active_job.finish_time_list.append(preempt_job.release_time)
             preempt_job.start_time_list.append(preempt_job.release_time)
