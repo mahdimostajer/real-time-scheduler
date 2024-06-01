@@ -26,14 +26,15 @@ class Task:
 class Job:
     id_counter = count(start=1)
 
-    def __init__(self, task: Task, release_time: float, deadline: float):
+    def __init__(self, task: Task, release_time: float, deadline: float, instance_number: int):
         self.id: int = next(self.id_counter)
         self.task: Task = task
-        self.release_time: int = release_time
-        self.deadline: int = deadline
+        self.release_time: float = release_time
+        self.deadline: float = deadline
         self.remaining_execution_time: float = task.execution_time
         self.start_time_list: list[float] = []
         self.finish_time_list: list[float] = []
+        self.instance_number = instance_number
 
     @property
     def start_time(self):
@@ -132,9 +133,11 @@ def allocate_processors_to_tasks(tasks: list[Task], processors: list[Processor])
 def create_task_jobs(task: Task, until: int) -> list[Job]:
     jobs: list[Job] = []
     clock = 0
+    instance_number = 1
     while clock < until:
-        jobs.append(Job(task=task, release_time=clock, deadline=clock + task.period))
+        jobs.append(Job(task=task, release_time=clock, deadline=clock + task.period, instance_number=instance_number))
         clock += task.period
+        instance_number += 1
     return jobs
 
 
@@ -195,7 +198,7 @@ def print_scheduled_job_list(jobs: list[Job]) -> None:
         print("-" * 100)
         print(
             f"EXECUTED\n"
-            + f"JOB={job.id} TASK={job.task.id} PERIOD={job.task.period} RELEASE={job.release_time} DEADLINE={job.deadline} EXEC_TIME={job.task.execution_time}\n"
+            + f"JOB={job.id} TASK={job.task.id} INSTANCE_NUMBER={job.instance_number} PERIOD={job.task.period} RELEASE={job.release_time} DEADLINE={job.deadline} EXEC_TIME={job.task.execution_time}\n"
             + f"FROM {interval_start} TO {interval_finish} FOR {execution} SECONDS."
         )
         job.remaining_execution_time -= execution
