@@ -6,7 +6,7 @@ from itertools import count, zip_longest
 NUMBER_OF_TASKS = 12
 NUMBER_OF_PROCESSORS = 4
 PERIODS = [50, 40, 30, 20, 10]
-SUM_UTIL = 3
+SUM_UTIL = 4
 ERROR_MARGIN = 0.1 ** 10
 
 
@@ -126,6 +126,7 @@ def allocate_processors_to_tasks(tasks: list[Task], processors: list[Processor])
 
         if min_processor is None:
             print("--- Assign task to processor is not possible! ---")
+            raise Exception("\nscheduling was not possible!")
         else:
             min_processor.assign_task(task)
 
@@ -247,17 +248,20 @@ def edf_schedule(tasks: list[Task]):
 
 
 def schedule():
-    task_utils = uunifast(tasks_count=NUMBER_OF_TASKS, utilization=SUM_UTIL)
-    task_periods = get_periods(n=NUMBER_OF_TASKS)
+    try:
+        task_utils = uunifast(tasks_count=NUMBER_OF_TASKS, utilization=SUM_UTIL)
+        task_periods = get_periods(n=NUMBER_OF_TASKS)
 
-    tasks = create_tasks(task_utils=task_utils, task_periods=task_periods)
-    processors = [Processor() for _ in range(NUMBER_OF_PROCESSORS)]
+        tasks = create_tasks(task_utils=task_utils, task_periods=task_periods)
+        processors = [Processor() for _ in range(NUMBER_OF_PROCESSORS)]
 
-    allocate_processors_to_tasks(tasks=tasks, processors=processors)
-    for processor in processors:
-        print("\nPROCESSOR:")
-        print(processor)
-        edf_schedule(processor.tasks)
+        allocate_processors_to_tasks(tasks=tasks, processors=processors)
+        for processor in processors:
+            print("\nPROCESSOR:")
+            print(processor)
+            edf_schedule(processor.tasks)
+    except Exception as e:
+        print(e)
 
 
 if __name__ == "__main__":
