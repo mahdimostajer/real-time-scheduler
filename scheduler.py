@@ -29,8 +29,8 @@ class Job:
     def __init__(self, task: Task, release_time: float, deadline: float):
         self.id: int = next(self.id_counter)
         self.task: Task = task
-        self.release_time: int = release_time
-        self.deadline: int = deadline
+        self.release_time = release_time
+        self.deadline = deadline
         self.remaining_execution_time: float = task.execution_time
         self.start_time_list: list[float] = []
         self.finish_time_list: list[float] = []
@@ -47,7 +47,7 @@ class Job:
     def execution_intervals(self):
         return list(zip_longest(self.start_time_list, self.finish_time_list, fillvalue=None))
 
-    def __eq__(self, value: object) -> bool:
+    def __eq__(self, value: "Job") -> bool:
         return self.id == value.id
 
     def __str__(self) -> str:
@@ -208,6 +208,7 @@ def print_scheduled_job_list(jobs: list[Job]) -> None:
 def edf_schedule_jobs(jobs: list[Job]) -> list[Job]:
     scheduled_jobs: list[Job] = []
     clock = 0
+    active_job = None
     while jobs:
         if clock == 0 or active_job not in jobs:
             clock = max(clock, min([job.release_time for job in jobs]))
