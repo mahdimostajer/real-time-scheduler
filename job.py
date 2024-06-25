@@ -33,7 +33,8 @@ class Job:
         return (
                 f"JOB=> id={self.id}:\n"
                 + f"remaining_execution_time={self.remaining_execution_time}\n"
-                + f"release={self.release_time} deadline={self.deadline} start={self.start_time} finish={self.finish_time}\n"
+                + f"release={self.release_time} deadline={self.deadline}\n"
+                + f"start={self.start_time} finish={self.finish_time}\n"
                 + f"execution_intervals={self.execution_intervals}"
         )
 
@@ -49,6 +50,7 @@ class PeriodicJob(Job):
         return (
                 f"JOB=> id={self.id}: task=({str(self.task)})\n"
                 + f"remaining_execution_time={self.remaining_execution_time}\n"
-                + f"release={self.release_time} deadline={self.deadline} start={self.start_time} finish={self.finish_time}\n"
+                + f"release={self.release_time} deadline={self.deadline}\n"
+                + f"start={self.start_time} finish={self.finish_time}\n"
                 + f"execution_intervals={self.execution_intervals}"
         )

@@ -1,10 +1,10 @@
+import copy
 from itertools import count
 
-from task import Task
-from job import Job, PeriodicJob
-from utils import print_task_list, print_scheduled_job_list, decision
-import copy
 from config import *
+from job import Job, PeriodicJob
+from task import Task
+from utils import print_task_list, print_scheduled_job_list, decision
 
 
 class Processor:
@@ -46,7 +46,7 @@ class Processor:
         return f"PROC=> id={self.id}: util={self.util} tasks={[str(task) for task in self.tasks]}"
 
     def create_all_jobs(self, until: int) -> list[Job]:
-        self.tasks.sort(key=lambda task: task.period)
+        self.tasks.sort(key=lambda t: t.period)
 
         print(f"Going to create Jobs from below tasks until {until}.")
         print_task_list(self.tasks)
@@ -82,7 +82,7 @@ class Processor:
 
     def pick_earliest_deadline_job(self, clock: float) -> Job | None:
         earliest_deadline_job = None
-        for job in filter(lambda job: job.release_time <= clock, self.jobs):
+        for job in filter(lambda j: j.release_time <= clock, self.jobs):
             if earliest_deadline_job is None:
                 earliest_deadline_job = job
             elif job.deadline < earliest_deadline_job.deadline:

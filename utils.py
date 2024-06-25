@@ -1,7 +1,8 @@
 import random
-from job import Job
-from task import Task
+
 from config import *
+from job import Job, PeriodicJob
+from task import Task
 
 
 def get_periods(n, periods_list):
@@ -25,12 +26,12 @@ def print_job_list(jobs: list[Job]) -> None:
 
 
 def print_task_list(tasks: list[Task]) -> None:
-    tasks = sorted(tasks, key=lambda task: task.util, reverse=True)
+    tasks = sorted(tasks, key=lambda t: t.util, reverse=True)
     for task in tasks:
         print(task)
 
 
-def print_scheduled_job_list(jobs: list[Job]) -> None:
+def print_scheduled_job_list(jobs: list[PeriodicJob]) -> None:
     for job in jobs:
         job.remaining_execution_time = job.task.execution_time
 
@@ -40,12 +41,13 @@ def print_scheduled_job_list(jobs: list[Job]) -> None:
 
     execution_intervals.sort(key=lambda x: x[1])
     for job, interval_start, interval_finish in execution_intervals:
-        job: Job
+        job: PeriodicJob
         execution = interval_finish - interval_start
         print("-" * 100)
         print(
             f"EXECUTED\n"
-            + f"JOB={job.id} TASK={job.task.id} INSTANCE_NUMBER={job.instance_number} PERIOD={job.task.period} RELEASE={job.release_time} DEADLINE={job.deadline} EXEC_TIME={job.task.execution_time}\n"
+            + f"JOB={job.id} TASK={job.task.id} INSTANCE_NUMBER={job.instance_number} PERIOD={job.task.period}\n"
+            + f"RELEASE={job.release_time} DEADLINE={job.deadline} EXEC_TIME={job.task.execution_time}\n"
             + f"FROM {interval_start} TO {interval_finish} FOR {execution} SECONDS."
         )
         job.remaining_execution_time -= execution

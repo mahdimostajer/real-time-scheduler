@@ -1,11 +1,12 @@
-import math
 import random
 
+import math
+
+from config import *
 from job import Job
 from processor import Processor
 from task import Task
 from utils import decide_task_criticality, get_periods
-from config import *
 
 
 def uunifast(tasks_count: int, utilization):
@@ -36,7 +37,7 @@ def create_tasks(task_utils, task_periods):
 
 
 def allocate_processors_to_tasks(tasks: list[Task], processors: list[Processor]):
-    tasks = sorted(tasks, key=lambda task: task.util, reverse=True)
+    tasks = sorted(tasks, key=lambda t: t.util, reverse=True)
     for task in tasks:
 
         min_util = math.inf
