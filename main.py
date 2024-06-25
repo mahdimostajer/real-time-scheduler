@@ -2,15 +2,18 @@ import math
 import random
 import copy
 
-from job import Job
+from job import Job, PeriodicJob
 from processor import Processor
 from task import Task
 
 NUMBER_OF_TASKS = 12
 NUMBER_OF_PROCESSORS = 4
+NUMBER_OF_APERIODIC_JOBS = 40
 PERIODS = [50, 40, 30, 20, 10]
 SUM_UTIL = 3
 ERROR_MARGIN = 0.1 ** 10
+
+OVERRUN_PROB = 0.2
 
 
 def uunifast(tasks_count: int, utilization):
@@ -34,12 +37,21 @@ def get_periods(n):
     return periods
 
 
+def decision(probability):
+    return random.random() < probability
+
+
+def decide_task_criticality():
+    return decision(0.5)
+
+
 def create_tasks(task_utils, task_periods):
     tasks: list[Task] = []
 
     for util, period in zip(task_utils, task_periods):
         execution_time = util * period
-        new_task = Task(period=period, util=util, execution_time=execution_time)
+        high_criticality = decide_task_criticality()
+        new_task = Task(period=period, util=util, execution_time=execution_time, high_criticality=high_criticality)
         tasks.append(new_task)
 
     tasks = sorted(tasks, key=lambda task: task.util, reverse=True)
@@ -70,15 +82,20 @@ def create_task_jobs(task: Task, until: int) -> list[Job]:
     clock = 0
     instance_number = 1
     while clock < until:
-        jobs.append(Job(task=task, release_time=clock, deadline=clock + task.period, instance_number=instance_number))
+
+        will_overrun = False
+        if task.high_criticality:
+            will_overrun = decision(OVERRUN_PROB)
+
+        jobs.append(
+            PeriodicJob(task=task, release_time=clock, deadline=clock + task.period, instance_number=instance_number, will_overrun=will_overrun))
         clock += task.period
         instance_number += 1
     return jobs
 
 
-def create_all_jobs(tasks: list[Task]) -> list[Job]:
+def create_all_jobs(tasks: list[Task], hyper_period: int) -> list[Job]:
     tasks.sort(key=lambda task: task.period)
-    hyper_period = math.lcm(*[task.period for task in tasks])
 
     print(f"hyper_period={hyper_period}")
     print_task_list(tasks)
@@ -173,13 +190,34 @@ def edf_schedule_jobs(jobs: list[Job]) -> list[Job]:
     return scheduled_jobs
 
 
-def edf_schedule(tasks: list[Task]):
+def edf_schedule(tasks: list[Task], hyper_period: int):
     print("\nEDF_SCHEDULE FUNCTION:")
-    jobs = create_all_jobs(tasks)
+    jobs = create_all_jobs(tasks, hyper_period)
     scheduled_jobs = edf_schedule_jobs(jobs)
 
     print("\nJOBS AFTER SCHEDULING:")
     print_scheduled_job_list(copy.deepcopy(scheduled_jobs))
+
+
+def get_aperiodic_release_times(count: int, hyper_period: int):
+    release_times = []
+    for i in range(count):
+        release_times.append(random.randint(0, hyper_period))
+
+    return release_times
+
+
+def create_aperiodic_jobs(count: int, hyper_period: int):
+    job_deadlines = get_periods(n=count)
+    job_release_times = get_aperiodic_release_times(count=count, hyper_period=hyper_period)
+
+    jobs = []
+    for deadline, release_time in zip(job_deadlines, job_release_times):
+        absolute_deadline = release_time + deadline
+        execution_time = deadline // 2
+        jobs.append(Job(release_time=release_time, deadline=absolute_deadline, execution_time=execution_time))
+
+    return jobs
 
 
 def schedule():
@@ -188,13 +226,18 @@ def schedule():
         task_periods = get_periods(n=NUMBER_OF_TASKS)
 
         tasks = create_tasks(task_utils=task_utils, task_periods=task_periods)
-        processors = [Processor() for _ in range(NUMBER_OF_PROCESSORS)]
+        hyper_period = math.lcm(*[task.period for task in tasks])
 
+        processors = [Processor() for _ in range(NUMBER_OF_PROCESSORS)]
         allocate_processors_to_tasks(tasks=tasks, processors=processors)
+
+        aperiodic_jobs = create_aperiodic_jobs(count=NUMBER_OF_APERIODIC_JOBS, hyper_period=hyper_period)
+
         for processor in processors:
+            processor.calculate_server_utilization()
             print("\nPROCESSOR:")
             print(processor)
-            edf_schedule(processor.tasks)
+            edf_schedule(processor.tasks, hyper_period)
     except Exception as e:
         print(e)
 
