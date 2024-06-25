@@ -131,11 +131,15 @@ def schedule(overrun_probability, sum_util, number_of_aperiodic_jobs, number_of_
         for job in aperiodic_jobs:
             job_copy = copy.deepcopy(job)
             processor.add_aperiodic_job(job_copy)
+            for job in selected_jobs:
+                processor.add_aperiodic_job(copy.deepcopy(job))
             try:
                 processor.edf_schedule(until=hyper_period, quiet=True)
                 selected_jobs.append(job)
             except Exception:
-                processor.remove_aperiodic_jobs(job_copy)
+                pass
+            finally:
+                processor.reset_aperiodic_jobs()
         for job in selected_jobs:
             aperiodic_jobs.remove(job)
         all_jobs += processor.edf_schedule(until=hyper_period, quiet=not should_print)

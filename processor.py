@@ -183,8 +183,8 @@ class Processor:
     def add_aperiodic_job(self, job: Job) -> None:
         self.aperiodic_jobs.append(job)
 
-    def remove_aperiodic_jobs(self, job: Job) -> None:
-        self.aperiodic_jobs.remove(job)
+    def reset_aperiodic_jobs(self) -> None:
+        self.aperiodic_jobs.clear()
 
     def get_aperiodic_jobs(self, until: int) -> list[Job]:
         return list(filter(lambda j: j.release_time <= until, self.aperiodic_jobs))
