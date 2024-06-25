@@ -149,13 +149,13 @@ class Processor:
                         job.drop()
                         self.jobs.remove(job)
                         scheduled_jobs.append(job)
-            elif active_job.is_aperiodic:
+            elif active_job.is_aperiodic and len(active_job.finish_time_list) == 0:
                 active_job: Job
                 aperiodic_job_utilization = active_job.calculate_utilization()
                 if aperiodic_job_utilization < self.server_utilization:
                     self.server_utilization -= aperiodic_job_utilization
-                    if self.server_utilization < 0:
-                        raise Exception("Server utilization exceeded!")
+                else:
+                    raise Exception("Server utilization exceeded!")
 
             preempt_job = self.pick_preempt_job(
                 clock=clock + active_job.remaining_execution_time,

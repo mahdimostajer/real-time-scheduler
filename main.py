@@ -1,3 +1,4 @@
+import copy
 import random
 
 import math
@@ -126,13 +127,16 @@ def schedule(overrun_probability, sum_util, number_of_aperiodic_jobs, number_of_
         processor.calculate_server_utilization()
         print("\nPROCESSOR:") if should_print else ...
         print(processor) if should_print else ...
+        selected_jobs = []
         for job in aperiodic_jobs:
-            processor.add_aperiodic_job(job)
+            job_copy = copy.deepcopy(job)
+            processor.add_aperiodic_job(job_copy)
             try:
                 processor.edf_schedule(until=hyper_period, quiet=True)
+                selected_jobs.append(job)
             except Exception:
-                processor.remove_aperiodic_jobs(job)
-        for job in processor.aperiodic_jobs:
+                processor.remove_aperiodic_jobs(job_copy)
+        for job in selected_jobs:
             aperiodic_jobs.remove(job)
         all_jobs += processor.edf_schedule(until=hyper_period, quiet=not should_print)
 
