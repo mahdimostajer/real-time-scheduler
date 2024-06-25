@@ -1,8 +1,8 @@
 import copy
-import math
 from itertools import count
 
-from config import *
+import math
+
 from job import Job, PeriodicJob
 from task import Task
 from utils import print_task_list, print_scheduled_periodic_job_list, decision
@@ -20,6 +20,7 @@ class Processor:
         self.server_utilization = None
         self.overrun_prob = overrun_prob
         self._hyper_period = None
+        self.quiet = False
 
     @property
     def hyper_period(self) -> int:
@@ -58,8 +59,8 @@ class Processor:
     def create_all_jobs(self, until: int) -> list[Job]:
         self.tasks.sort(key=lambda t: t.period)
 
-        print(f"Going to create Jobs from below tasks until {until}.")
-        print_task_list(self.tasks)
+        print(f"Going to create Jobs from below tasks until {until}.") if not self.quiet else ...
+        print_task_list(self.tasks) if not self.quiet else ...
 
         jobs: list[Job] = []
         x = self.calculate_scaling_factor()
@@ -189,12 +190,13 @@ class Processor:
         return list(filter(lambda j: j.release_time <= until, self.aperiodic_jobs))
 
     def edf_schedule(self, until: int, quiet: bool = False) -> list[Job]:
-        print("\nEDF_SCHEDULE FUNCTION:") if not quiet else ...
+        self.quiet = quiet
+        print("\nEDF_SCHEDULE FUNCTION:") if not self.quiet else ...
         self.jobs = self.create_all_jobs(until) + self.get_aperiodic_jobs(until)
         scheduled_jobs = self.edf_schedule_jobs()
-        print("\nJOBS AFTER SCHEDULING:") if not quiet else ...
+        print("\nJOBS AFTER SCHEDULING:") if not self.quiet else ...
         scheduled_periodic_jobs: list[PeriodicJob] = list(filter(lambda j: isinstance(j, PeriodicJob), scheduled_jobs))
-        print_scheduled_periodic_job_list(copy.deepcopy(scheduled_periodic_jobs)) if not quiet else ...
+        print_scheduled_periodic_job_list(copy.deepcopy(scheduled_periodic_jobs)) if not self.quiet else ...
         return scheduled_jobs
 
     def predict_utilization(self, until: int) -> float:
