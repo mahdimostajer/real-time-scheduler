@@ -73,6 +73,7 @@ def print_scheduled_periodic_job_list(jobs: list[PeriodicJob]) -> None:
         print(
             f"EXECUTED\n"
             + f"JOB={job.id} TASK={job.task.id} INSTANCE_NUMBER={job.instance_number} PERIOD={job.task.period}\n"
+            + f"OVERRUN={job.will_overrun} IS_DROPPED={job.dropped}\n"
             + f"RELEASE={job.release_time} DEADLINE={job.deadline} EXEC_TIME={job.task.execution_time}\n"
             + f"FROM {interval_start} TO {interval_finish} FOR {execution} SECONDS."
         )
