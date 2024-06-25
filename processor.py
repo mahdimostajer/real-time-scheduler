@@ -73,7 +73,7 @@ class Processor:
         low_critical_tasks = list(filter(lambda task: not task.high_criticality, self.tasks))
 
         U_low = sum(task.util for task in low_critical_tasks)
-        U_high = sum(task.util for task in high_critical_tasks)
+        U_high = sum(task.util for task in high_critical_tasks) + self.server_utilization
 
         if U_low >= 1:
             return 0
@@ -198,18 +198,3 @@ class Processor:
         scheduled_periodic_jobs: list[PeriodicJob] = list(filter(lambda j: isinstance(j, PeriodicJob), scheduled_jobs))
         print_scheduled_periodic_job_list(copy.deepcopy(scheduled_periodic_jobs)) if not self.quiet else ...
         return scheduled_jobs
-
-    def predict_utilization(self, until: int) -> float:
-        scheduled_jobs = self.edf_schedule(until=until, quiet=True)
-        execution_intervals = []
-        for job in scheduled_jobs:
-            execution_intervals += [(job, *execution_interval) for execution_interval in job.execution_intervals]
-        execution_intervals.sort(key=lambda x: x[1])
-        processor_utilization_time = 0
-        for job, start, finish in execution_intervals:
-            if finish <= until:
-                processor_utilization_time += finish - start
-            else:
-                processor_utilization_time += until - start
-                break
-        return processor_utilization_time / until
