@@ -134,9 +134,12 @@ class Processor:
     def reset_aperiodic_jobs(self) -> None:
         self.aperiodic_jobs.clear()
 
+    def get_aperiodic_jobs(self, until: int) -> list[Job]:
+        return list(filter(lambda j: j.release_time <= until, self.aperiodic_jobs))
+
     def edf_schedule(self, until: int, quiet: bool = False) -> list[Job]:
         print("\nEDF_SCHEDULE FUNCTION:") if quiet else ...
-        self.jobs = self.create_all_jobs(until) + self.aperiodic_jobs
+        self.jobs = self.create_all_jobs(until) + self.get_aperiodic_jobs(until)
         scheduled_jobs = self.edf_schedule_jobs()
         print("\nJOBS AFTER SCHEDULING:") if quiet else ...
         scheduled_periodic_jobs: list[PeriodicJob] = list(filter(lambda j: isinstance(j, PeriodicJob), scheduled_jobs))
