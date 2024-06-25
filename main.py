@@ -77,7 +77,7 @@ def create_aperiodic_jobs(count: int, hyper_period: int):
 
 def calculate_quality_of_service(jobs: list[Job]):
     low_priority_jobs = list(
-        filter(lambda job: not isinstance(PeriodicJob, job) or not job.task.high_criticality, jobs))
+        filter(lambda j: not isinstance(j, PeriodicJob) or not j.task.high_criticality, jobs))
     sum_QOS = 0
     for job in low_priority_jobs:
         if len(job.finish_time_list) == 0:

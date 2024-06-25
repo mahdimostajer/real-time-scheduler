@@ -1,16 +1,25 @@
 from main import schedule
+import matplotlib.pyplot as plt
 
 
 def part_one(overrun_prob):
     number_of_aperiodic_jobs = 40
-    schedule(overrun_probability=overrun_prob, number_of_processors=2, sum_util=0.5 * 2,
-             number_of_aperiodic_jobs=number_of_aperiodic_jobs)
-    schedule(overrun_probability=overrun_prob, number_of_processors=4, sum_util=0.5 * 4,
-             number_of_aperiodic_jobs=number_of_aperiodic_jobs)
-    schedule(overrun_probability=overrun_prob, number_of_processors=8, sum_util=0.5 * 8,
-             number_of_aperiodic_jobs=number_of_aperiodic_jobs)
-    schedule(overrun_probability=overrun_prob, number_of_processors=16, sum_util=0.5 * 16,
-             number_of_aperiodic_jobs=number_of_aperiodic_jobs)
+    num_of_processors = [2, 4, 8, 16]
+    quality_of_services = []
+
+    for num in num_of_processors:
+        qos = schedule(overrun_probability=overrun_prob, number_of_processors=num, sum_util=0.5 * num,
+                       number_of_aperiodic_jobs=number_of_aperiodic_jobs)
+        quality_of_services.append(qos)
+
+    plt.plot(num_of_processors, quality_of_services)
+
+    plt.xlabel('num_of_processors')
+    plt.ylabel('quality_of_service')
+
+    plt.title(f"overrun probability {overrun_prob}")
+
+    plt.show()
 
 
 def part_two(overrun_prob):
