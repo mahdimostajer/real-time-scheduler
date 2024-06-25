@@ -108,7 +108,8 @@ class Processor:
             if earliest_deadline_job is None:
                 earliest_deadline_job = job
             elif job.deadline < earliest_deadline_job.deadline:
-                earliest_deadline_job = job
+                if not (job.is_aperiodic and earliest_deadline_job.is_periodic):
+                    earliest_deadline_job = job
             else:
                 pass
         return earliest_deadline_job
@@ -130,14 +131,14 @@ class Processor:
                 active_job: Job = self.pick_earliest_deadline_job(clock)
                 active_job.start_time_list.append(clock)
 
-            if isinstance(active_job, PeriodicJob):
+            if active_job.is_periodic:
                 active_job: PeriodicJob
                 if active_job.will_overrun:
                     end_of_hyper_period = ((active_job.release_time // self.hyper_period) + 1) * self.hyper_period
                     jobs_to_drop = list(
                         filter(
                             lambda job: (
-                                    isinstance(job, PeriodicJob)
+                                    job.is_periodic
                                     and not job.task.high_criticality
                                     and job.release_time <= end_of_hyper_period),
                             self.jobs,
@@ -147,6 +148,13 @@ class Processor:
                         job.drop()
                         self.jobs.remove(job)
                         scheduled_jobs.append(job)
+            elif active_job.is_aperiodic:
+                active_job: Job
+                aperiodic_job_utilization = active_job.calculate_utilization()
+                if aperiodic_job_utilization < self.server_utilization:
+                    self.server_utilization -= aperiodic_job_utilization
+                    if self.server_utilization < 0:
+                        raise Exception("Server utilization exceeded!")
 
             preempt_job = self.pick_preempt_job(
                 clock=clock + active_job.remaining_execution_time,
@@ -163,6 +171,9 @@ class Processor:
                 clock += active_job.remaining_execution_time
                 active_job.finish_time_list.append(clock)
                 active_job.remaining_execution_time = 0
+                if active_job.is_aperiodic:
+                    aperiodic_job_utilization = active_job.calculate_utilization()
+                    self.server_utilization += aperiodic_job_utilization
                 self.jobs.remove(active_job)
                 scheduled_jobs.append(active_job)
 
@@ -171,8 +182,8 @@ class Processor:
     def add_aperiodic_job(self, job: Job) -> None:
         self.aperiodic_jobs.append(job)
 
-    def reset_aperiodic_jobs(self) -> None:
-        self.aperiodic_jobs.clear()
+    def remove_aperiodic_jobs(self, job: Job) -> None:
+        self.aperiodic_jobs.remove(job)
 
     def get_aperiodic_jobs(self, until: int) -> list[Job]:
         return list(filter(lambda j: j.release_time <= until, self.aperiodic_jobs))
