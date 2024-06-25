@@ -28,6 +28,17 @@ class Job:
     def execution_intervals(self):
         return list(zip_longest(self.start_time_list, self.finish_time_list, fillvalue=None))
 
+    @property
+    def is_periodic(self):
+        return isinstance(self, PeriodicJob)
+
+    @property
+    def is_aperiodic(self):
+        return not isinstance(self, PeriodicJob)
+
+    def calculate_utilization(self) -> float:
+        return self.execution_time / (self.deadline - self.release_time)
+
     def drop(self):
         self.start_time_list.append(self.release_time)
         self.finish_time_list.append(self.release_time)

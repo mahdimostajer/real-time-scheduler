@@ -102,14 +102,22 @@ def schedule(overrun_probability, sum_util, number_of_aperiodic_jobs, number_of_
 
     aperiodic_jobs = create_aperiodic_jobs(count=number_of_aperiodic_jobs, hyper_period=hyper_period)
 
-    all_jobs = aperiodic_jobs
+    all_jobs = []
     for processor in processors:
         processor.calculate_server_utilization()
         print("\nPROCESSOR:")
         print(processor)
-        scheduled_jobs = processor.edf_schedule(until=hyper_period)
-        all_jobs += scheduled_jobs
+        for job in aperiodic_jobs:
+            processor.add_aperiodic_job(job)
+            try:
+                processor.edf_schedule(until=hyper_period, quiet=True)
+            except Exception:
+                processor.remove_aperiodic_jobs(job)
+        for job in processor.aperiodic_jobs:
+            aperiodic_jobs.remove(job)
+        all_jobs += processor.edf_schedule(until=hyper_period, quiet=False)
 
+    all_jobs += aperiodic_jobs
     return calculate_quality_of_service(all_jobs)
 
 
