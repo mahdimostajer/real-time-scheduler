@@ -4,7 +4,7 @@ from itertools import count
 from config import *
 from job import Job, PeriodicJob
 from task import Task
-from utils import print_task_list, print_scheduled_job_list, decision
+from utils import print_task_list, print_scheduled_periodic_job_list, decision
 
 
 class Processor:
@@ -132,4 +132,5 @@ class Processor:
         self.jobs = self.create_all_jobs(until)
         scheduled_jobs = self.edf_schedule_jobs()
         print("\nJOBS AFTER SCHEDULING:")
-        print_scheduled_job_list(copy.deepcopy(scheduled_jobs))
+        scheduled_periodic_jobs: list[PeriodicJob] = list(filter(lambda j: isinstance(j, PeriodicJob), scheduled_jobs))
+        print_scheduled_periodic_job_list(copy.deepcopy(scheduled_periodic_jobs))
