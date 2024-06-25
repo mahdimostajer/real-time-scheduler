@@ -1,3 +1,4 @@
+import json
 import random
 
 from config import *
@@ -82,3 +83,25 @@ def print_scheduled_periodic_job_list(jobs: list[PeriodicJob]) -> None:
             print(f"TASK WAS PREEMPTED, REMAINING EXECUTION TIME IS {job.remaining_execution_time}.")
         else:
             print(f"EXECUTION OF TASK WAS FINISHED.")
+
+
+def read_json_to_dict(json_file):
+    try:
+        with open(json_file, 'r') as f:
+            data = json.load(f)
+        return data
+    except FileNotFoundError:
+        print(f"The file {json_file} does not exist.")
+        return {}
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON from the file {json_file}.")
+        return {}
+
+
+def write_dict_to_json(data, json_file):
+    try:
+        with open(json_file, 'w') as f:
+            json.dump(data, f, indent=4)
+        print(f"Data successfully written to {json_file}.")
+    except Exception as e:
+        print(f"An error occurred while writing to the file {json_file}: {e}")

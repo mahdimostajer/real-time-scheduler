@@ -6,13 +6,14 @@ from config import *
 from job import Job, PeriodicJob
 from processor import Processor
 from task import Task
-from utils import decide_task_criticality, get_periods
+from utils import decide_task_criticality, get_periods, read_json_to_dict, write_dict_to_json
 
 
-def uunifast(tasks_count: int, utilization):
-    while True:
+def uunifast(tasks_count: int, utilization, iterations=100_000):
+    iteration = 0
+    tasks = []
+    while iteration < iterations:
         utilization_sum = utilization
-        tasks = []
         for _ in range(tasks_count - 1):
             next_utilization_sum = utilization_sum * math.pow(random.uniform(0, 1), 1 / (tasks_count - 1))
             tasks.append(utilization_sum - next_utilization_sum)
@@ -20,6 +21,20 @@ def uunifast(tasks_count: int, utilization):
         tasks.append(utilization_sum)
         if all(util <= 1 for util in tasks):
             break
+        else:
+            tasks = []
+        iteration += 1
+    uunifast_cache = read_json_to_dict('uunifast.json')
+    tasks_list = uunifast_cache.get(f'{tasks_count}${utilization}', [])
+    if tasks:
+        tasks_list.append(tasks)
+        uunifast_cache[f'{tasks_count}${utilization}'] = tasks_list
+        write_dict_to_json(uunifast_cache, f'uunifast.json')
+    else:
+        if len(tasks_list) > 0:
+            tasks = random.choice(tasks_list)
+        else:
+            return uunifast(tasks_count, utilization, iterations=10 * iterations)
     return tasks
 
 
