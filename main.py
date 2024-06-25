@@ -1,82 +1,16 @@
 import math
 import random
 import copy
-from itertools import count, zip_longest
+
+from job import Job
+from processor import Processor
+from task import Task
 
 NUMBER_OF_TASKS = 12
 NUMBER_OF_PROCESSORS = 4
 PERIODS = [50, 40, 30, 20, 10]
-SUM_UTIL = 4
+SUM_UTIL = 3
 ERROR_MARGIN = 0.1 ** 10
-
-
-class Task:
-    id_counter = count(start=1)
-
-    def __init__(self, period: int, util: float, execution_time: float):
-        self.id: int = next(self.id_counter)
-        self.period: int = period
-        self.util: float = util
-        self.execution_time: float = execution_time
-
-    def __str__(self) -> str:
-        return f"TASK=> id={self.id}: period={self.period} util={self.util} execution_time={self.execution_time}"
-
-
-class Job:
-    id_counter = count(start=1)
-
-    def __init__(self, task: Task, release_time: float, deadline: float, instance_number: int):
-        self.id: int = next(self.id_counter)
-        self.task: Task = task
-        self.release_time: float = release_time
-        self.deadline: float = deadline
-        self.remaining_execution_time: float = task.execution_time
-        self.start_time_list: list[float] = []
-        self.finish_time_list: list[float] = []
-        self.instance_number = instance_number
-
-    @property
-    def start_time(self):
-        return self.start_time_list[0] if self.start_time_list else None
-
-    @property
-    def finish_time(self):
-        return self.finish_time_list[-1] if self.finish_time_list else None
-
-    @property
-    def execution_intervals(self):
-        return list(zip_longest(self.start_time_list, self.finish_time_list, fillvalue=None))
-
-    def __eq__(self, value: "Job") -> bool:
-        return self.id == value.id
-
-    def __str__(self) -> str:
-        return (
-                f"JOB=> id={self.id}: task=({str(self.task)})\n"
-                + f"remaining_execution_time={self.remaining_execution_time}\n"
-                + f"release={self.release_time} deadline={self.deadline} start={self.start_time} finish={self.finish_time}\n"
-                + f"execution_intervals={self.execution_intervals}"
-        )
-
-
-class Processor:
-    id_counter = count(start=1)
-
-    def __init__(self):
-        self.id: int = next(self.id_counter)
-        self.tasks: list[Task] = []
-        self.util: float = 0
-
-    def assign_task(self, task: Task):
-        self.tasks.append(task)
-        self.util += task.util
-
-    def get_remaining_util(self):
-        return 1 - self.util
-
-    def __str__(self) -> str:
-        return f"PROC=> id={self.id}: util={self.util} tasks={[str(task) for task in self.tasks]}"
 
 
 def uunifast(tasks_count: int, utilization):
