@@ -36,6 +36,10 @@ def create_tasks(task_utils, task_periods):
     return tasks
 
 
+class AllocationException(Exception):
+    pass
+
+
 def allocate_processors_to_tasks(tasks: list[Task], processors: list[Processor]):
     tasks = sorted(tasks, key=lambda t: t.util, reverse=True)
     for task in tasks:
@@ -50,7 +54,7 @@ def allocate_processors_to_tasks(tasks: list[Task], processors: list[Processor])
 
         if min_processor is None:
             print("--- Assign task to processor is not possible! ---")
-            raise Exception("\nscheduling was not possible!")
+            raise AllocationException("\nscheduling was not possible!")
         else:
             min_processor.assign_task(task)
 
@@ -85,7 +89,7 @@ def calculate_quality_of_service(jobs: list[Job]):
         if job.finish_time_list[-1] <= job.deadline:
             sum_QOS += 100
         else:
-            sum_QOS += min(0, 100 - 10 * (job.finish_time_list[-1] - job.deadline))
+            sum_QOS += max(0, 100 - 10 * (job.finish_time_list[-1] - job.deadline))
 
     return sum_QOS / len(low_priority_jobs)
 
