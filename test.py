@@ -24,14 +24,22 @@ def part_one(overrun_prob):
 
 def part_two(overrun_prob):
     number_of_processors = 8
-    schedule(overrun_probability=overrun_prob, number_of_processors=number_of_processors,
-             sum_util=0.5 * number_of_processors, number_of_aperiodic_jobs=40)
-    schedule(overrun_probability=overrun_prob, number_of_processors=number_of_processors,
-             sum_util=0.5 * number_of_processors, number_of_aperiodic_jobs=80)
-    schedule(overrun_probability=overrun_prob, number_of_processors=number_of_processors,
-             sum_util=0.5 * number_of_processors, number_of_aperiodic_jobs=120)
-    schedule(overrun_probability=overrun_prob, number_of_processors=number_of_processors,
-             sum_util=0.5 * number_of_processors, number_of_aperiodic_jobs=160)
+    nums_of_aperiodic_jobs = [40, 80, 120, 160]
+    quality_of_services = []
+
+    for num in nums_of_aperiodic_jobs:
+        qos = schedule(overrun_probability=overrun_prob, number_of_processors=number_of_processors,
+                       sum_util=0.5 * number_of_processors, number_of_aperiodic_jobs=num)
+        quality_of_services.append(qos)
+
+    plt.plot(number_of_processors, quality_of_services)
+
+    plt.xlabel('nums_of_aperiodic_jobs')
+    plt.ylabel('quality_of_service')
+
+    plt.title(f"overrun probability {overrun_prob}")
+
+    plt.show()
 
 
 def section_two(number_of_processors):
