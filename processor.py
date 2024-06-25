@@ -13,6 +13,7 @@ class Processor:
     def __init__(self):
         self.id: int = next(self.id_counter)
         self.tasks: list[Task] = []
+        self.aperiodic_jobs: list[Job] = []
         self.jobs: list[Job] = []
         self.util: float = 0
         self.server_utilization = None
@@ -32,7 +33,7 @@ class Processor:
         while True:
             util = max_possible_server_util + 0.05
             x = (util + sum([task.util for task in high_critical_tasks]) / (
-                        1 - sum([task.util for task in low_critical_tasks])))
+                    1 - sum([task.util for task in low_critical_tasks])))
 
             sum_util = sum([task.util * x for task in low_critical_tasks]) + sum(
                 [task.util * 2 for task in high_critical_tasks]) + util
@@ -127,10 +128,32 @@ class Processor:
 
         return scheduled_jobs
 
-    def edf_schedule(self, until: int):
-        print("\nEDF_SCHEDULE FUNCTION:")
-        self.jobs = self.create_all_jobs(until)
+    def add_aperiodic_job(self, job: Job) -> None:
+        self.aperiodic_jobs.append(job)
+
+    def reset_aperiodic_jobs(self) -> None:
+        self.aperiodic_jobs.clear()
+
+    def edf_schedule(self, until: int, quiet: bool = False) -> list[Job]:
+        print("\nEDF_SCHEDULE FUNCTION:") if quiet else ...
+        self.jobs = self.create_all_jobs(until) + self.aperiodic_jobs
         scheduled_jobs = self.edf_schedule_jobs()
-        print("\nJOBS AFTER SCHEDULING:")
+        print("\nJOBS AFTER SCHEDULING:") if quiet else ...
         scheduled_periodic_jobs: list[PeriodicJob] = list(filter(lambda j: isinstance(j, PeriodicJob), scheduled_jobs))
-        print_scheduled_periodic_job_list(copy.deepcopy(scheduled_periodic_jobs))
+        print_scheduled_periodic_job_list(copy.deepcopy(scheduled_periodic_jobs)) if quiet else ...
+        return scheduled_jobs
+
+    def predict_utilization(self, until: int) -> float:
+        scheduled_jobs = self.edf_schedule(until=until, quiet=True)
+        execution_intervals = []
+        for job in scheduled_jobs:
+            execution_intervals += [(job, *execution_interval) for execution_interval in job.execution_intervals]
+        execution_intervals.sort(key=lambda x: x[1])
+        processor_utilization_time = 0
+        for job, start, finish in execution_intervals:
+            if finish <= until:
+                processor_utilization_time += finish - start
+            else:
+                processor_utilization_time += until - start
+                break
+        return processor_utilization_time / until
