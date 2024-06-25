@@ -10,13 +10,14 @@ from utils import print_task_list, print_scheduled_periodic_job_list, decision
 class Processor:
     id_counter = count(start=1)
 
-    def __init__(self):
+    def __init__(self, overrun_prob):
         self.id: int = next(self.id_counter)
         self.tasks: list[Task] = []
         self.aperiodic_jobs: list[Job] = []
         self.jobs: list[Job] = []
         self.util: float = 0
         self.server_utilization = None
+        self.overrun_prob = overrun_prob
 
     def assign_task(self, task: Task):
         self.tasks.append(task)
@@ -57,8 +58,7 @@ class Processor:
             jobs += self.create_task_jobs(task, until)
         return jobs
 
-    @staticmethod
-    def create_task_jobs(task: Task, until: int) -> list[Job]:
+    def create_task_jobs(self, task: Task, until: int) -> list[Job]:
         jobs: list[Job] = []
         clock = 0
         instance_number = 1
@@ -66,7 +66,7 @@ class Processor:
 
             will_overrun = False
             if task.high_criticality:
-                will_overrun = decision(OVERRUN_PROB)
+                will_overrun = decision(self.overrun_prob)
 
             jobs.append(
                 PeriodicJob(

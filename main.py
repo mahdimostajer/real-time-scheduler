@@ -75,18 +75,18 @@ def create_aperiodic_jobs(count: int, hyper_period: int):
     return jobs
 
 
-def schedule():
+def schedule(overrun_probability, sum_util, number_of_aperiodic_jobs, number_of_processors, should_print=False):
     try:
-        task_utils = uunifast(tasks_count=NUMBER_OF_TASKS, utilization=SUM_UTIL)
+        task_utils = uunifast(tasks_count=NUMBER_OF_TASKS, utilization=sum_util)
         task_periods = get_periods(n=NUMBER_OF_TASKS, periods_list=PERIODS)
 
         tasks = create_tasks(task_utils=task_utils, task_periods=task_periods)
         hyper_period = math.lcm(*[task.period for task in tasks])
 
-        processors = [Processor() for _ in range(NUMBER_OF_PROCESSORS)]
+        processors = [Processor(overrun_probability) for _ in range(number_of_processors)]
         allocate_processors_to_tasks(tasks=tasks, processors=processors)
 
-        aperiodic_jobs = create_aperiodic_jobs(count=NUMBER_OF_APERIODIC_JOBS, hyper_period=hyper_period)
+        aperiodic_jobs = create_aperiodic_jobs(count=number_of_aperiodic_jobs, hyper_period=hyper_period)
 
         for processor in processors:
             processor.calculate_server_utilization()
@@ -98,4 +98,5 @@ def schedule():
 
 
 if __name__ == "__main__":
-    schedule()
+    schedule(overrun_probability=0.2, number_of_processors=8, sum_util=0.5 * 8,
+             number_of_aperiodic_jobs=40)
