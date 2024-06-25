@@ -12,6 +12,7 @@ class Job:
         self.deadline: float = deadline
         self.execution_time: float = execution_time
         self.remaining_execution_time: float = execution_time
+        self.dropped: bool = False
         self.start_time_list: list[float] = []
         self.finish_time_list: list[float] = []
 
@@ -26,6 +27,12 @@ class Job:
     @property
     def execution_intervals(self):
         return list(zip_longest(self.start_time_list, self.finish_time_list, fillvalue=None))
+
+    def drop(self):
+        self.start_time_list.append(self.release_time)
+        self.finish_time_list.append(self.release_time)
+        self.remaining_execution_time = 0
+        self.dropped = True
 
     def __eq__(self, value: "Job") -> bool:
         return self.id == value.id
@@ -42,14 +49,15 @@ class Job:
 
 class PeriodicJob(Job):
     def __init__(self, task: Task, release_time: float, deadline: float, instance_number: int, will_overrun: bool):
-        super().__init__(release_time=release_time, deadline=deadline, execution_time=task.execution_time)
+        execution_time = task.execution_time * 2 if will_overrun else task.execution_time
+        super().__init__(release_time=release_time, deadline=deadline, execution_time=execution_time)
         self.task: Task = task
         self.instance_number = instance_number
         self.will_overrun = will_overrun
 
     def __str__(self) -> str:
         return (
-                f"JOB=> id={self.id}: task=({str(self.task)})\n"
+                f"JOB{'[OVERRUNS]' if self.will_overrun else ''}=> id={self.id}: task=({str(self.task)})\n"
                 + f"remaining_execution_time={self.remaining_execution_time}\n"
                 + f"release={self.release_time} deadline={self.deadline}\n"
                 + f"start={self.start_time} finish={self.finish_time}\n"

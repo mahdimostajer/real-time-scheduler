@@ -1,4 +1,5 @@
 import copy
+import math
 from itertools import count
 
 from config import *
@@ -18,6 +19,13 @@ class Processor:
         self.util: float = 0
         self.server_utilization = None
         self.overrun_prob = overrun_prob
+        self._hyper_period = None
+
+    @property
+    def hyper_period(self) -> int:
+        if self._hyper_period is None:
+            self._hyper_period = math.lcm(*[task.period for task in self.tasks])
+        return self._hyper_period
 
     def assign_task(self, task: Task):
         self.tasks.append(task)
@@ -54,11 +62,23 @@ class Processor:
         print_task_list(self.tasks)
 
         jobs: list[Job] = []
+        x = self.calculate_scaling_factor()
         for task in self.tasks:
-            jobs += self.create_task_jobs(task, until)
+            jobs += self.create_task_jobs(task, until, x)
         return jobs
 
-    def create_task_jobs(self, task: Task, until: int) -> list[Job]:
+    def calculate_scaling_factor(self):
+        high_critical_tasks = list(filter(lambda task: task.high_criticality, self.tasks))
+        low_critical_tasks = list(filter(lambda task: not task.high_criticality, self.tasks))
+
+        U_low = sum(task.util for task in low_critical_tasks)
+        U_high = sum(task.util for task in high_critical_tasks)
+
+        if U_low >= 1:
+            return 0
+        return U_high / (1 - U_low)
+
+    def create_task_jobs(self, task: Task, until: int, x: float) -> list[Job]:
         jobs: list[Job] = []
         clock = 0
         instance_number = 1
@@ -68,11 +88,12 @@ class Processor:
             if task.high_criticality:
                 will_overrun = decision(self.overrun_prob)
 
+            virtual_relative_deadline = task.period * x if task.high_criticality else task.period
             jobs.append(
                 PeriodicJob(
                     task=task,
                     release_time=clock,
-                    deadline=clock + task.period,
+                    deadline=clock + virtual_relative_deadline,
                     instance_number=instance_number,
                     will_overrun=will_overrun,
                 )
@@ -106,8 +127,27 @@ class Processor:
         while self.jobs:
             if clock == 0 or active_job not in self.jobs:
                 clock = max(clock, min([job.release_time for job in self.jobs]))
-                active_job = self.pick_earliest_deadline_job(clock)
+                active_job: Job = self.pick_earliest_deadline_job(clock)
                 active_job.start_time_list.append(clock)
+
+            if isinstance(active_job, PeriodicJob):
+                active_job: PeriodicJob
+                if active_job.will_overrun:
+                    end_of_hyper_period = ((active_job.release_time // self.hyper_period) + 1) * self.hyper_period
+                    jobs_to_drop = list(
+                        filter(
+                            lambda job: (
+                                    isinstance(job, PeriodicJob)
+                                    and not job.task.high_criticality
+                                    and job.release_time <= end_of_hyper_period),
+                            self.jobs,
+                        )
+                    )
+                    for job in jobs_to_drop:
+                        job.drop()
+                        self.jobs.remove(job)
+                        scheduled_jobs.append(job)
+
             preempt_job = self.pick_preempt_job(
                 clock=clock + active_job.remaining_execution_time,
                 deadline=active_job.deadline,
@@ -138,12 +178,12 @@ class Processor:
         return list(filter(lambda j: j.release_time <= until, self.aperiodic_jobs))
 
     def edf_schedule(self, until: int, quiet: bool = False) -> list[Job]:
-        print("\nEDF_SCHEDULE FUNCTION:") if quiet else ...
+        print("\nEDF_SCHEDULE FUNCTION:") if not quiet else ...
         self.jobs = self.create_all_jobs(until) + self.get_aperiodic_jobs(until)
         scheduled_jobs = self.edf_schedule_jobs()
-        print("\nJOBS AFTER SCHEDULING:") if quiet else ...
+        print("\nJOBS AFTER SCHEDULING:") if not quiet else ...
         scheduled_periodic_jobs: list[PeriodicJob] = list(filter(lambda j: isinstance(j, PeriodicJob), scheduled_jobs))
-        print_scheduled_periodic_job_list(copy.deepcopy(scheduled_periodic_jobs)) if quiet else ...
+        print_scheduled_periodic_job_list(copy.deepcopy(scheduled_periodic_jobs)) if not quiet else ...
         return scheduled_jobs
 
     def predict_utilization(self, until: int) -> float:
