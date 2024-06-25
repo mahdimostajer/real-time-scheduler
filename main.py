@@ -3,7 +3,7 @@ import random
 import math
 
 from config import *
-from job import Job
+from job import Job, PeriodicJob
 from processor import Processor
 from task import Task
 from utils import decide_task_criticality, get_periods
@@ -75,26 +75,42 @@ def create_aperiodic_jobs(count: int, hyper_period: int):
     return jobs
 
 
+def calculate_quality_of_service(jobs: list[Job]):
+    low_priority_jobs = list(
+        filter(lambda job: not isinstance(PeriodicJob, job) or not job.task.high_criticality, jobs))
+    sum_QOS = 0
+    for job in low_priority_jobs:
+        if len(job.finish_time_list) == 0:
+            continue
+        if job.finish_time_list[-1] <= job.deadline:
+            sum_QOS += 100
+        else:
+            sum_QOS += min(0, 100 - 10 * (job.finish_time_list[-1] - job.deadline))
+
+    return sum_QOS / len(low_priority_jobs)
+
+
 def schedule(overrun_probability, sum_util, number_of_aperiodic_jobs, number_of_processors, should_print=False):
-    try:
-        task_utils = uunifast(tasks_count=NUMBER_OF_TASKS, utilization=sum_util)
-        task_periods = get_periods(n=NUMBER_OF_TASKS, periods_list=PERIODS)
+    task_utils = uunifast(tasks_count=NUMBER_OF_TASKS, utilization=sum_util)
+    task_periods = get_periods(n=NUMBER_OF_TASKS, periods_list=PERIODS)
 
-        tasks = create_tasks(task_utils=task_utils, task_periods=task_periods)
-        hyper_period = math.lcm(*[task.period for task in tasks])
+    tasks = create_tasks(task_utils=task_utils, task_periods=task_periods)
+    hyper_period = math.lcm(*[task.period for task in tasks])
 
-        processors = [Processor(overrun_probability) for _ in range(number_of_processors)]
-        allocate_processors_to_tasks(tasks=tasks, processors=processors)
+    processors = [Processor(overrun_probability) for _ in range(number_of_processors)]
+    allocate_processors_to_tasks(tasks=tasks, processors=processors)
 
-        aperiodic_jobs = create_aperiodic_jobs(count=number_of_aperiodic_jobs, hyper_period=hyper_period)
+    aperiodic_jobs = create_aperiodic_jobs(count=number_of_aperiodic_jobs, hyper_period=hyper_period)
 
-        for processor in processors:
-            processor.calculate_server_utilization()
-            print("\nPROCESSOR:")
-            print(processor)
-            processor.edf_schedule(until=hyper_period)
-    except Exception as e:
-        print(e)
+    all_jobs = aperiodic_jobs
+    for processor in processors:
+        processor.calculate_server_utilization()
+        print("\nPROCESSOR:")
+        print(processor)
+        scheduled_jobs = processor.edf_schedule(until=hyper_period)
+        all_jobs += scheduled_jobs
+
+    return calculate_quality_of_service(all_jobs)
 
 
 if __name__ == "__main__":
