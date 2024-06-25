@@ -38,7 +38,7 @@ def part_two(overrun_prob):
         except Exception as e:
             print(e)
 
-    plt.plot(number_of_processors, quality_of_services)
+    plt.plot(nums_of_aperiodic_jobs, quality_of_services)
 
     plt.xlabel('nums_of_aperiodic_jobs')
     plt.ylabel('quality_of_service')
