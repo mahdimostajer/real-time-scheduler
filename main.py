@@ -131,8 +131,8 @@ def schedule(overrun_probability, sum_util, number_of_aperiodic_jobs, number_of_
         for job in aperiodic_jobs:
             job_copy = copy.deepcopy(job)
             processor.add_aperiodic_job(job_copy)
-            for job in selected_jobs:
-                processor.add_aperiodic_job(copy.deepcopy(job))
+            for j in selected_jobs:
+                processor.add_aperiodic_job(copy.deepcopy(j))
             try:
                 processor.edf_schedule(until=hyper_period, quiet=True)
                 selected_jobs.append(job)
