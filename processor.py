@@ -109,8 +109,8 @@ class Processor:
             if earliest_deadline_job is None:
                 earliest_deadline_job = job
             elif job.deadline < earliest_deadline_job.deadline:
-                if not (job.is_aperiodic and earliest_deadline_job.is_periodic):
-                    earliest_deadline_job = job
+                # if not (job.is_aperiodic and earliest_deadline_job.is_periodic):
+                earliest_deadline_job = job
             else:
                 pass
         return earliest_deadline_job
@@ -139,9 +139,9 @@ class Processor:
                     jobs_to_drop = list(
                         filter(
                             lambda job: (
-                                    job.is_periodic
+                                (job.is_periodic
                                     and not job.task.high_criticality
-                                    and job.release_time <= end_of_hyper_period),
+                                    and job.release_time <= end_of_hyper_period)) or not job.is_periodic,
                             self.jobs,
                         )
                     )

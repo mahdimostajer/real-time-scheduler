@@ -67,7 +67,7 @@ def section_two(number_of_processors):
     plt.xlabel('sum_utils')
     plt.ylabel('schedulablity')
 
-    plt.title(f"overrun probability {number_of_processors}")
+    plt.title(f"number_of_processors {number_of_processors}")
 
     plt.show()
 

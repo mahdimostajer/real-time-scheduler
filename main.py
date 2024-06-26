@@ -99,9 +99,13 @@ def calculate_quality_of_service(jobs: list[Job]):
     low_priority_jobs = list(
         filter(lambda j: not isinstance(j, PeriodicJob) or not j.task.high_criticality, jobs))
     sum_QOS = 0
+    if len(low_priority_jobs) == 0:
+        return sum_QOS
     for job in low_priority_jobs:
-        if len(job.finish_time_list) == 0:
+        if len(job.finish_time_list) == 0 or job.dropped:
             continue
+        if job.finish_time_list[-1] <= job.deadline and job.remaining_execution_time > 0:
+            print("me")
         if job.finish_time_list[-1] <= job.deadline:
             sum_QOS += 100
         else:

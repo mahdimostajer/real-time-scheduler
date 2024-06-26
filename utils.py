@@ -102,6 +102,6 @@ def write_dict_to_json(data, json_file):
     try:
         with open(json_file, 'w') as f:
             json.dump(data, f, indent=4)
-        print(f"Data successfully written to {json_file}.")
+        # print(f"Data successfully written to {json_file}.")
     except Exception as e:
         print(f"An error occurred while writing to the file {json_file}: {e}")
